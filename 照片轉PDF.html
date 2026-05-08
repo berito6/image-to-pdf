@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="zh-TW" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="照片轉PDF">
+<title>照片轉PDF</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{--radius:16px;--safe-bottom:env(safe-area-inset-bottom,0px);--tr:0.25s ease}
+[data-theme="dark"]{--bg:#0f0f0f;--surface:#1c1c1e;--surface2:#2c2c2e;--border:rgba(255,255,255,0.08);--text:#f5f5f7;--text2:rgba(255,255,255,0.45);--accent:#ff6b35;--accent2:#ff9a70;--hbg:rgba(255,107,53,0.1);--bbg:rgba(15,15,15,0.95);--badge:rgba(0,0,0,0.7);--tog:#3a3a3c}
+[data-theme="light"]{--bg:#f2f2f7;--surface:#fff;--surface2:#e5e5ea;--border:rgba(0,0,0,0.09);--text:#1c1c1e;--text2:rgba(0,0,0,0.45);--accent:#e8541e;--accent2:#c44316;--hbg:rgba(232,84,30,0.07);--bbg:rgba(242,242,247,0.95);--badge:rgba(0,0,0,0.55);--tog:#d1d1d6}
+[data-theme="warm"]{--bg:#fdf6ee;--surface:#fff;--surface2:#f5ebe0;--border:rgba(180,120,60,0.12);--text:#2d1f0e;--text2:rgba(45,31,14,0.45);--accent:#c0622a;--accent2:#a04e1e;--hbg:rgba(192,98,42,0.08);--bbg:rgba(253,246,238,0.96);--badge:rgba(0,0,0,0.55);--tog:#d4b99a}
+[data-theme="green"]{--bg:#0d1f15;--surface:#162b1e;--surface2:#1f3828;--border:rgba(100,220,130,0.1);--text:#e8f5ec;--text2:rgba(232,245,236,0.45);--accent:#4caf72;--accent2:#6dcf8f;--hbg:rgba(76,175,114,0.1);--bbg:rgba(13,31,21,0.95);--badge:rgba(0,0,0,0.6);--tog:#2a4a35}
+body{font-family:'Noto Sans TC',-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100dvh;display:flex;flex-direction:column;overflow-x:hidden;transition:background var(--tr),color var(--tr)}
+header{padding:56px 24px 18px;background:var(--hbg);border-bottom:0.5px solid var(--border);display:flex;align-items:flex-end;justify-content:space-between;transition:background var(--tr)}
+.app-title{font-size:26px;font-weight:700;letter-spacing:-0.5px;display:flex;align-items:center;gap:10px;color:var(--text)}
+.app-icon{width:34px;height:34px;background:var(--accent);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px;transition:background var(--tr)}
+.subtitle{font-size:12px;color:var(--text2);margin-top:3px;font-weight:300}
+.theme-btn{background:var(--surface);border:0.5px solid var(--border);border-radius:20px;padding:7px 12px;cursor:pointer;display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);font-family:inherit;transition:all var(--tr);white-space:nowrap;flex-shrink:0}
+.theme-btn:active{transform:scale(0.95)}
+.theme-dot{width:10px;height:10px;border-radius:50%;background:var(--accent);transition:background var(--tr)}
+.sheet-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:50;opacity:0;pointer-events:none;transition:opacity 0.25s;backdrop-filter:blur(4px)}
+.sheet-overlay.open{opacity:1;pointer-events:all}
+.theme-sheet{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-radius:20px 20px 0 0;padding:12px 16px calc(16px + var(--safe-bottom));z-index:51;transform:translateY(100%);transition:transform 0.3s cubic-bezier(0.32,0.72,0,1),background var(--tr);border-top:0.5px solid var(--border)}
+.theme-sheet.open{transform:translateY(0)}
+.sheet-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 16px}
+.sheet-title{font-size:11px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:14px;padding:0 2px}
+.theme-options{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.theme-option{border-radius:14px;padding:14px;cursor:pointer;border:1.5px solid transparent;transition:all 0.2s;position:relative;overflow:hidden}
+.theme-option:active{transform:scale(0.97)}
+.theme-option.active{border-color:var(--accent)}
+.theme-option[data-t="dark"]{background:#1c1c1e}
+.theme-option[data-t="light"]{background:#f2f2f7;border:1.5px solid rgba(0,0,0,0.08)}
+.theme-option[data-t="light"].active{border-color:#e8541e}
+.theme-option[data-t="warm"]{background:#fdf0e3;border:1.5px solid rgba(180,120,60,0.15)}
+.theme-option[data-t="warm"].active{border-color:#c0622a}
+.theme-option[data-t="green"]{background:#162b1e}
+.theme-preview{display:flex;gap:5px;margin-bottom:10px}
+.theme-preview span{height:8px;border-radius:4px;flex:1}
+.theme-option[data-t="dark"] .theme-preview span:nth-child(1){background:#ff6b35}
+.theme-option[data-t="dark"] .theme-preview span:nth-child(2){background:#2c2c2e}
+.theme-option[data-t="dark"] .theme-preview span:nth-child(3){background:#444}
+.theme-option[data-t="light"] .theme-preview span:nth-child(1){background:#e8541e}
+.theme-option[data-t="light"] .theme-preview span:nth-child(2){background:#ddd}
+.theme-option[data-t="light"] .theme-preview span:nth-child(3){background:#eee}
+.theme-option[data-t="warm"] .theme-preview span:nth-child(1){background:#c0622a}
+.theme-option[data-t="warm"] .theme-preview span:nth-child(2){background:#d4b99a}
+.theme-option[data-t="warm"] .theme-preview span:nth-child(3){background:#e8d5c0}
+.theme-option[data-t="green"] .theme-preview span:nth-child(1){background:#4caf72}
+.theme-option[data-t="green"] .theme-preview span:nth-child(2){background:#1f3828}
+.theme-option[data-t="green"] .theme-preview span:nth-child(3){background:#2a4a35}
+.theme-name{font-size:13px;font-weight:500}
+.theme-option[data-t="dark"] .theme-name{color:#f5f5f7}
+.theme-option[data-t="light"] .theme-name{color:#1c1c1e}
+.theme-option[data-t="warm"] .theme-name{color:#2d1f0e}
+.theme-option[data-t="green"] .theme-name{color:#e8f5ec}
+.theme-check{position:absolute;top:10px;right:10px;width:18px;height:18px;background:var(--accent);border-radius:50%;display:none;align-items:center;justify-content:center;font-size:10px;color:#fff}
+.theme-option.active .theme-check{display:flex}
+main{flex:1;padding:20px 16px;display:flex;flex-direction:column;gap:16px}
+.drop-zone{border:1.5px dashed rgba(128,128,128,0.3);border-radius:var(--radius);padding:40px 20px;text-align:center;cursor:pointer;transition:all 0.2s;background:var(--surface)}
+.drop-zone:active,.drop-zone.drag-over{border-color:var(--accent);background:var(--surface2)}
+.drop-icon{font-size:44px;margin-bottom:14px;display:block}
+.drop-title{font-size:16px;font-weight:500;margin-bottom:6px;color:var(--text)}
+.drop-hint{font-size:13px;color:var(--text2);line-height:1.7}
+.add-photo-btn{display:inline-flex;align-items:center;gap:6px;margin-top:14px;background:var(--accent);color:#fff;border:none;border-radius:20px;padding:8px 18px;font-size:13px;font-family:inherit;cursor:pointer;font-weight:500;transition:all 0.15s}
+.add-photo-btn:active{transform:scale(0.96)}
+input[type="file"]{display:none}
+.section-label{font-size:11px;font-weight:500;color:var(--text2);letter-spacing:0.8px;text-transform:uppercase;margin-bottom:8px;padding:0 4px;display:flex;align-items:center;gap:6px}
+.count-chip{background:rgba(128,128,128,0.12);color:var(--accent);font-size:11px;padding:2px 8px;border-radius:20px;font-weight:500;letter-spacing:0}
+.photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.photo-item{position:relative;border-radius:10px;overflow:hidden;aspect-ratio:3/4;background:var(--surface2);cursor:grab;transition:opacity 0.15s}
+.photo-item img{width:100%;height:100%;object-fit:cover;display:block}
+.photo-badge{position:absolute;top:6px;left:6px;background:var(--badge);color:#fff;font-size:11px;font-weight:600;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.photo-remove{position:absolute;top:6px;right:6px;background:var(--badge);color:#fff;border:none;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;backdrop-filter:blur(4px);line-height:1}
+.add-more{aspect-ratio:3/4;border-radius:10px;border:1.5px dashed var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;gap:5px;color:var(--text2);font-size:12px;background:transparent;transition:all 0.15s}
+.add-more:active{background:var(--surface2)}
+.add-more-icon{font-size:22px}
+.options-card{background:var(--surface);border-radius:var(--radius);overflow:hidden;border:0.5px solid var(--border);transition:background var(--tr)}
+.option-row{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:0.5px solid var(--border);gap:12px}
+.option-row:last-child{border-bottom:none}
+.option-label{font-size:14px;color:var(--text)}
+.option-hint{font-size:11px;color:var(--text2);margin-top:2px}
+select{background:var(--surface2);color:var(--text);border:none;border-radius:8px;padding:6px 10px;font-size:13px;font-family:inherit;outline:none;-webkit-appearance:none;cursor:pointer;transition:background var(--tr)}
+.toggle{width:44px;height:26px;background:var(--tog);border-radius:13px;position:relative;cursor:pointer;transition:background 0.2s;border:none;flex-shrink:0}
+.toggle.on{background:var(--accent)}
+.toggle::after{content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;background:#fff;border-radius:50%;transition:transform 0.2s;box-shadow:0 1px 3px rgba(0,0,0,0.3)}
+.toggle.on::after{transform:translateX(18px)}
+.bottom-bar{padding:14px 16px;padding-bottom:calc(14px + var(--safe-bottom));border-top:0.5px solid var(--border);background:var(--bbg);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);position:sticky;bottom:0;transition:background var(--tr)}
+.merge-btn{width:100%;padding:15px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-size:16px;font-weight:500;font-family:inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.15s}
+.merge-btn:active{transform:scale(0.98);filter:brightness(0.9)}
+.merge-btn:disabled{background:var(--surface2);color:var(--text2);cursor:not-allowed;transform:none;filter:none}
+.progress-bar{width:100%;height:3px;background:var(--surface2);border-radius:2px;margin-bottom:10px;overflow:hidden;display:none}
+.progress-fill{height:100%;background:var(--accent);border-radius:2px;transition:width 0.3s;width:0%}
+.toast{position:fixed;bottom:calc(90px + var(--safe-bottom));left:50%;transform:translateX(-50%) translateY(20px);background:var(--surface);color:var(--text);padding:11px 20px;border-radius:20px;font-size:14px;white-space:nowrap;opacity:0;transition:all 0.3s;backdrop-filter:blur(10px);border:0.5px solid var(--border);pointer-events:none;z-index:100}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.empty-state{display:block}
+.has-photos .empty-state{display:none}
+.has-photos .photo-section{display:block}
+.photo-section{display:none}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <div class="app-title"><div class="app-icon">📄</div>照片轉 PDF</div>
+    <p class="subtitle">選取照片，一鍵合併成 PDF</p>
+  </div>
+  <button class="theme-btn" onclick="openThemeSheet()">
+    <div class="theme-dot"></div>主題
+  </button>
+</header>
+
+<main id="main">
+  <div class="empty-state">
+    <div class="drop-zone" id="dropZone" onclick="document.getElementById('fi').click()">
+      <span class="drop-icon">🖼️</span>
+      <p class="drop-title">點這裡選取照片</p>
+      <p class="drop-hint">支援 JPG、PNG<br>可一次選多張</p>
+      <button class="add-photo-btn" onclick="event.stopPropagation();document.getElementById('fi').click()">＋ 選取照片</button>
+    </div>
+  </div>
+  <div class="photo-section">
+    <p class="section-label">照片順序 <span class="count-chip" id="countChip">0 張</span></p>
+    <div class="photo-grid" id="photoGrid"></div>
+  </div>
+  <div class="photo-section">
+    <p class="section-label">設定</p>
+    <div class="options-card">
+      <div class="option-row">
+        <div><div class="option-label">頁面方向</div><div class="option-hint">每頁的顯示方向</div></div>
+        <select id="orientation"><option value="auto">自動</option><option value="portrait">直式</option><option value="landscape">橫式</option></select>
+      </div>
+      <div class="option-row">
+        <div><div class="option-label">紙張大小</div></div>
+        <select id="pageSize"><option value="a4">A4</option><option value="letter">Letter</option></select>
+      </div>
+      <div class="option-row">
+        <div><div class="option-label">保留白邊</div><div class="option-hint">頁面四周留空白</div></div>
+        <button class="toggle on" id="marginToggle" onclick="this.classList.toggle('on')"></button>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div class="bottom-bar">
+  <div class="progress-bar" id="progressBar"><div class="progress-fill" id="progressFill"></div></div>
+  <button class="merge-btn" id="mergeBtn" onclick="mergePDF()" disabled><span>先選取照片</span></button>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="sheet-overlay" id="overlay" onclick="closeThemeSheet()"></div>
+<div class="theme-sheet" id="themeSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title">選擇主題</div>
+  <div class="theme-options">
+    <div class="theme-option" data-t="dark" onclick="setTheme('dark')">
+      <div class="theme-preview"><span></span><span></span><span></span></div>
+      <div class="theme-name">深色</div><div class="theme-check">✓</div>
+    </div>
+    <div class="theme-option" data-t="light" onclick="setTheme('light')">
+      <div class="theme-preview"><span></span><span></span><span></span></div>
+      <div class="theme-name">淺色</div><div class="theme-check">✓</div>
+    </div>
+    <div class="theme-option" data-t="warm" onclick="setTheme('warm')">
+      <div class="theme-preview"><span></span><span></span><span></span></div>
+      <div class="theme-name">暖調</div><div class="theme-check">✓</div>
+    </div>
+    <div class="theme-option" data-t="green" onclick="setTheme('green')">
+      <div class="theme-preview"><span></span><span></span><span></span></div>
+      <div class="theme-name">森林</div><div class="theme-check">✓</div>
+    </div>
+  </div>
+</div>
+<input type="file" id="fi" accept="image/*" multiple onchange="handleFiles(this.files)">
+
+<script>
+const{jsPDF}=window.jspdf;
+let photos=[];
+
+// init theme
+setTheme(localStorage.getItem('pdf-theme')||'dark',false);
+
+function setTheme(t,save=true){
+  document.documentElement.setAttribute('data-theme',t);
+  document.querySelectorAll('.theme-option').forEach(el=>el.classList.toggle('active',el.dataset.t===t));
+  if(save){localStorage.setItem('pdf-theme',t);closeThemeSheet();}
+}
+function openThemeSheet(){document.getElementById('overlay').classList.add('open');document.getElementById('themeSheet').classList.add('open')}
+function closeThemeSheet(){document.getElementById('overlay').classList.remove('open');document.getElementById('themeSheet').classList.remove('open')}
+
+const dz=document.getElementById('dropZone');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag-over')});
+dz.addEventListener('dragleave',()=>dz.classList.remove('drag-over'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag-over');handleFiles(e.dataTransfer.files)});
+
+function handleFiles(files){
+  Array.from(files).filter(f=>f.type.startsWith('image/')).forEach(f=>photos.push({file:f,url:URL.createObjectURL(f)}));
+  render();
+}
+
+function render(){
+  document.getElementById('main').classList.toggle('has-photos',photos.length>0);
+  document.getElementById('countChip').textContent=photos.length+' 張';
+  const btn=document.getElementById('mergeBtn');
+  btn.disabled=!photos.length;
+  btn.querySelector('span').textContent=photos.length?`合併 ${photos.length} 張照片成 PDF`:'先選取照片';
+  const grid=document.getElementById('photoGrid');
+  grid.innerHTML='';
+  photos.forEach((p,i)=>{
+    const d=document.createElement('div');
+    d.className='photo-item';d.draggable=true;
+    d.addEventListener('dragstart',e=>e.dataTransfer.setData('text/plain',i));
+    d.addEventListener('dragover',e=>{e.preventDefault();d.style.opacity='0.5'});
+    d.addEventListener('dragleave',()=>d.style.opacity='1');
+    d.addEventListener('drop',e=>{e.preventDefault();d.style.opacity='1';const f=parseInt(e.dataTransfer.getData('text/plain'));if(f!==i){[photos[f],photos[i]]=[photos[i],photos[f]];render()}});
+    d.innerHTML=`<img src="${p.url}" loading="lazy"><div class="photo-badge">${i+1}</div><button class="photo-remove" onclick="removePhoto(${i})">✕</button>`;
+    grid.appendChild(d);
+  });
+  const a=document.createElement('div');
+  a.className='add-more';a.onclick=()=>document.getElementById('fi').click();
+  a.innerHTML='<span class="add-more-icon">＋</span><span>新增</span>';
+  grid.appendChild(a);
+}
+
+function removePhoto(i){URL.revokeObjectURL(photos[i].url);photos.splice(i,1);render()}
+
+async function mergePDF(){
+  if(!photos.length)return;
+  const ori=document.getElementById('orientation').value;
+  const ps=document.getElementById('pageSize').value;
+  const mg=document.getElementById('marginToggle').classList.contains('on')?10:0;
+  const pb=document.getElementById('progressBar');
+  const pf=document.getElementById('progressFill');
+  const btn=document.getElementById('mergeBtn');
+  pb.style.display='block';btn.disabled=true;btn.querySelector('span').textContent='處理中…';
+  try{
+    const pd=ps==='a4'?{w:210,h:297}:{w:215.9,h:279.4};
+    let pdf=null;
+    for(let i=0;i<photos.length;i++){
+      pf.style.width=`${(i/photos.length)*100}%`;
+      const id=await loadImg(photos[i].file);
+      const dim=await getDim(photos[i].url);
+      const o=ori==='auto'?(dim.w>=dim.h?'landscape':'portrait'):ori;
+      const pw=o==='landscape'?pd.h:pd.w,ph=o==='landscape'?pd.w:pd.h;
+      if(!pdf)pdf=new jsPDF({orientation:o,unit:'mm',format:[pw,ph]});
+      else pdf.addPage([pw,ph],o);
+      const aw=pw-mg*2,ah=ph-mg*2;
+      const r=Math.min(aw/dim.w,ah/dim.h);
+      const dw=dim.w*r,dh=dim.h*r;
+      pdf.addImage(id,photos[i].file.type==='image/png'?'PNG':'JPEG',mg+(aw-dw)/2,mg+(ah-dh)/2,dw,dh);
+    }
+    pf.style.width='100%';
+    const d=new Date();
+    pdf.save(`照片_${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}.pdf`);
+    showToast('✅ PDF 已儲存！');
+  }catch(e){showToast('❌ 發生錯誤，請重試')}
+  setTimeout(()=>{pb.style.display='none';pf.style.width='0%';btn.disabled=false;render()},1200);
+}
+
+function loadImg(f){return new Promise((res,rej)=>{const r=new FileReader();r.onload=e=>res(e.target.result);r.onerror=rej;r.readAsDataURL(f)})}
+function getDim(url){return new Promise(res=>{const i=new Image();i.onload=()=>res({w:i.naturalWidth,h:i.naturalHeight});i.src=url})}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000)}
+
+render();
+</script>
+</body>
+</html>
