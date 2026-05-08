@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Photo to PDF">
+<title>Photo to PDF</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{--radius:18px;--safe-bottom:env(safe-area-inset-bottom,0px);--tr:0.25s ease}
+
+[data-theme="dark"]{--bg:#141318;--surface:#1e1c24;--surface2:#2a2733;--border:rgba(255,255,255,0.07);--text:#f0eef8;--text2:rgba(240,238,248,0.42);--accent:#b69df8;--accent-dim:rgba(182,157,248,0.15);--hbg:rgba(182,157,248,0.08);--bbg:rgba(20,19,24,0.96);--tog:#35323f;--btn-text:#141318}
+[data-theme="light"]{--bg:#f7f5ff;--surface:#fff;--surface2:#ede9ff;--border:rgba(100,80,180,0.1);--text:#1e1a2e;--text2:rgba(30,26,46,0.42);--accent:#7c5cbf;--accent-dim:rgba(124,92,191,0.1);--hbg:rgba(124,92,191,0.07);--bbg:rgba(247,245,255,0.96);--tog:#cdc5e8;--btn-text:#fff}
+[data-theme="warm"]{--bg:#1c1410;--surface:#261e17;--surface2:#332820;--border:rgba(255,200,140,0.08);--text:#f5e8d8;--text2:rgba(245,232,216,0.4);--accent:#e8a96a;--accent-dim:rgba(232,169,106,0.13);--hbg:rgba(232,169,106,0.08);--bbg:rgba(28,20,16,0.96);--tog:#3d2e22;--btn-text:#1c1410}
+[data-theme="pink"]{--bg:#1a0f14;--surface:#251520;--surface2:#33202c;--border:rgba(255,180,210,0.08);--text:#fce8f0;--text2:rgba(252,232,240,0.42);--accent:#f48fb1;--accent-dim:rgba(244,143,177,0.13);--hbg:rgba(244,143,177,0.08);--bbg:rgba(26,15,20,0.96);--tog:#4a2535;--btn-text:#1a0f14}
+[data-theme="blue"]{--bg:#0d1220;--surface:#141a2e;--surface2:#1c2540;--border:rgba(130,170,255,0.08);--text:#e8eeff;--text2:rgba(232,238,255,0.42);--accent:#7aabf7;--accent-dim:rgba(122,171,247,0.13);--hbg:rgba(122,171,247,0.08);--bbg:rgba(13,18,32,0.96);--tog:#1e2d50;--btn-text:#0d1220}
+[data-theme="silver"]{--bg:#f0f0f2;--surface:#fff;--surface2:#e8e8ec;--border:rgba(0,0,0,0.08);--text:#1a1a24;--text2:rgba(26,26,36,0.42);--accent:#6e7a8a;--accent-dim:rgba(110,122,138,0.1);--hbg:rgba(110,122,138,0.06);--bbg:rgba(240,240,242,0.96);--tog:#b0b8c4;--btn-text:#fff}
+[data-theme="beige"]{--bg:#f5f0e8;--surface:#fdfaf4;--surface2:#ede6d8;--border:rgba(120,90,50,0.1);--text:#2c2318;--text2:rgba(44,35,24,0.42);--accent:#9a7a52;--accent-dim:rgba(154,122,82,0.12);--hbg:rgba(154,122,82,0.07);--bbg:rgba(245,240,232,0.96);--tog:#c4b49a;--btn-text:#fdfaf4}
+
+body{font-family:'Times New Roman',Times,serif;background:var(--bg);color:var(--text);min-height:100dvh;display:flex;flex-direction:column;overflow-x:hidden;transition:background var(--tr),color var(--tr)}
+
+header{padding:54px 22px 16px;background:var(--hbg);border-bottom:0.5px solid var(--border);display:flex;align-items:flex-end;justify-content:space-between;gap:12px;transition:background var(--tr)}
+.header-left{display:flex;align-items:center;gap:12px}
+.app-icon{width:42px;height:42px;background:var(--accent);border-radius:13px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;transition:background var(--tr)}
+.app-title{font-size:22px;font-weight:700;letter-spacing:-0.3px;color:var(--text)}
+.subtitle{font-size:12px;color:var(--text2);margin-top:2px;font-style:italic}
+.theme-btn{background:var(--surface);border:0.5px solid var(--border);border-radius:20px;padding:7px 13px;cursor:pointer;display:flex;align-items:center;gap:6px;font-size:12px;color:var(--text2);font-family:'Times New Roman',Times,serif;white-space:nowrap;flex-shrink:0;transition:all var(--tr)}
+.theme-btn:active{transform:scale(0.95)}
+.theme-dot{width:9px;height:9px;border-radius:50%;background:var(--accent);transition:background var(--tr)}
+
+/* tab bar */
+.tab-bar{display:flex;padding:12px 14px 0;gap:6px;border-bottom:0.5px solid var(--border);background:var(--bg);transition:background var(--tr)}
+.tab{flex:1;padding:9px 6px;border:none;background:transparent;font-family:'Times New Roman',Times,serif;font-size:12px;color:var(--text2);cursor:pointer;border-radius:10px 10px 0 0;border-bottom:2px solid transparent;transition:all 0.18s;display:flex;align-items:center;justify-content:center;gap:5px}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);background:var(--accent-dim)}
+.tab:active{opacity:0.7}
+
+.tab-panel{display:none;flex:1;flex-direction:column}
+.tab-panel.active{display:flex;flex-direction:column}
+
+main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.panel-scroll{flex:1;overflow-y:auto;padding:18px 14px;display:flex;flex-direction:column;gap:14px}
+
+/* drop zones */
+.drop-zone{border:1.5px dashed var(--border);border-radius:var(--radius);padding:34px 20px;text-align:center;cursor:pointer;transition:all 0.2s;background:var(--surface)}
+.drop-zone:active,.drop-zone.drag-over{border-color:var(--accent);background:var(--accent-dim)}
+.drop-icon{font-size:36px;margin-bottom:10px;display:block}
+.drop-title{font-size:15px;font-weight:700;margin-bottom:4px;color:var(--text)}
+.drop-hint{font-size:12px;color:var(--text2);line-height:1.7;font-style:italic}
+.action-row{display:flex;gap:8px;margin-top:12px;justify-content:center;flex-wrap:wrap}
+.pick-btn{display:inline-flex;align-items:center;gap:5px;background:var(--accent);color:var(--btn-text);border:none;border-radius:22px;padding:9px 18px;font-size:13px;font-family:'Times New Roman',Times,serif;cursor:pointer;font-weight:700;transition:all 0.15s}
+.pick-btn:active{transform:scale(0.96);filter:brightness(0.9)}
+.pick-btn.secondary{background:var(--surface2);color:var(--text);border:0.5px solid var(--border)}
+input[type="file"]{display:none}
+
+.section-label{font-size:10px;font-weight:700;color:var(--text2);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;padding:0 2px;display:flex;align-items:center;gap:6px}
+.count-chip{background:var(--accent-dim);color:var(--accent);font-size:11px;padding:2px 9px;border-radius:20px;font-weight:700;letter-spacing:0;text-transform:none}
+
+.photo-list{display:flex;flex-direction:column;gap:8px}
+.photo-card{display:flex;align-items:center;gap:12px;background:var(--surface);border-radius:14px;padding:10px;border:0.5px solid var(--border);transition:background var(--tr)}
+.photo-thumb{width:48px;height:60px;border-radius:8px;object-fit:cover;flex-shrink:0;background:var(--surface2)}
+.pdf-thumb{width:48px;height:60px;border-radius:8px;flex-shrink:0;background:var(--accent-dim);display:flex;align-items:center;justify-content:center;font-size:22px}
+.photo-info{flex:1;min-width:0}
+.photo-name{font-size:13px;font-weight:700;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.photo-meta{font-size:11px;color:var(--text2);margin-top:3px;font-style:italic}
+.photo-page{font-size:11px;color:var(--accent);margin-top:2px;font-weight:700}
+.photo-actions{display:flex;flex-direction:column;gap:4px;flex-shrink:0}
+.icon-btn{width:32px;height:32px;border-radius:8px;border:0.5px solid var(--border);background:var(--surface2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;color:var(--text2);transition:all 0.15s;font-family:'Times New Roman',Times,serif}
+.icon-btn:active{background:var(--accent-dim);color:var(--accent);transform:scale(0.92)}
+.icon-btn:disabled{opacity:0.22;cursor:not-allowed;transform:none}
+.del-btn{width:32px;height:32px;border-radius:8px;border:0.5px solid var(--border);background:var(--surface2);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--text2);transition:all 0.15s}
+.del-btn:active{background:rgba(255,80,80,0.12);color:#ff6060;transform:scale(0.92)}
+.add-more-row{display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;border:1.5px dashed var(--border);border-radius:14px;cursor:pointer;color:var(--text2);font-size:13px;transition:all 0.15s;background:transparent;font-family:'Times New Roman',Times,serif}
+.add-more-row:active{background:var(--accent-dim)}
+
+.options-card{background:var(--surface);border-radius:var(--radius);overflow:hidden;border:0.5px solid var(--border);transition:background var(--tr)}
+.option-row{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;border-bottom:0.5px solid var(--border);gap:12px}
+.option-row:last-child{border-bottom:none}
+.option-label{font-size:14px;color:var(--text)}
+.option-hint{font-size:11px;color:var(--text2);margin-top:2px;font-style:italic}
+select{background:var(--surface2);color:var(--text);border:none;border-radius:8px;padding:6px 10px;font-size:13px;font-family:'Times New Roman',Times,serif;outline:none;-webkit-appearance:none;cursor:pointer;transition:background var(--tr)}
+.toggle{width:44px;height:26px;background:var(--tog);border-radius:13px;position:relative;cursor:pointer;transition:background 0.2s;border:none;flex-shrink:0}
+.toggle.on{background:var(--accent)}
+.toggle::after{content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;background:#fff;border-radius:50%;transition:transform 0.2s;box-shadow:0 1px 4px rgba(0,0,0,0.25)}
+.toggle.on::after{transform:translateX(18px)}
+
+/* scan panel */
+.scan-box{background:var(--surface);border-radius:var(--radius);overflow:hidden;border:0.5px solid var(--border)}
+.scan-preview{width:100%;aspect-ratio:3/4;object-fit:cover;display:block;background:var(--surface2)}
+.scan-placeholder{width:100%;aspect-ratio:3/4;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:var(--surface2);color:var(--text2);font-size:13px;font-style:italic}
+.scan-placeholder span{font-size:48px}
+.scan-actions{padding:12px;display:flex;gap:8px}
+.scan-btn{flex:1;padding:12px;border:none;border-radius:12px;font-family:'Times New Roman',Times,serif;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.15s;display:flex;align-items:center;justify-content:center;gap:6px}
+.scan-btn.primary{background:var(--accent);color:var(--btn-text)}
+.scan-btn.ghost{background:var(--surface2);color:var(--text);border:0.5px solid var(--border)}
+.scan-btn:active{transform:scale(0.97)}
+.scan-tip{font-size:11px;color:var(--text2);text-align:center;padding:0 16px 14px;font-style:italic;line-height:1.6}
+
+/* bottom bar */
+.bottom-bar{padding:12px 14px;padding-bottom:calc(12px + var(--safe-bottom));border-top:0.5px solid var(--border);background:var(--bbg);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);position:sticky;bottom:0;transition:background var(--tr)}
+.merge-btn{width:100%;padding:15px;background:var(--accent);color:var(--btn-text);border:none;border-radius:var(--radius);font-size:15px;font-weight:700;font-family:'Times New Roman',Times,serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:all 0.15s;letter-spacing:0.3px}
+.merge-btn:active{transform:scale(0.98);filter:brightness(0.88)}
+.merge-btn:disabled{background:var(--surface2);color:var(--text2);cursor:not-allowed;transform:none;filter:none}
+.progress-bar{width:100%;height:3px;background:var(--surface2);border-radius:2px;margin-bottom:10px;overflow:hidden;display:none}
+.progress-fill{height:100%;background:var(--accent);border-radius:2px;transition:width 0.3s;width:0%}
+
+/* toast */
+.toast{position:fixed;bottom:calc(86px + var(--safe-bottom));left:50%;transform:translateX(-50%) translateY(16px);background:var(--surface);color:var(--text);padding:10px 20px;border-radius:20px;font-size:13px;white-space:nowrap;opacity:0;transition:all 0.28s;border:0.5px solid var(--border);pointer-events:none;z-index:100}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* theme sheet */
+.sheet-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:50;opacity:0;pointer-events:none;transition:opacity 0.25s;backdrop-filter:blur(6px)}
+.sheet-overlay.open{opacity:1;pointer-events:all}
+.theme-sheet{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-radius:22px 22px 0 0;padding:10px 16px calc(20px + var(--safe-bottom));z-index:51;transform:translateY(100%);transition:transform 0.32s cubic-bezier(0.32,0.72,0,1),background var(--tr);border-top:0.5px solid var(--border)}
+.theme-sheet.open{transform:translateY(0)}
+.sheet-handle{width:34px;height:4px;background:var(--border);border-radius:2px;margin:0 auto 14px}
+.sheet-title{font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:12px;padding:0 2px}
+.theme-options{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.theme-option{border-radius:12px;padding:11px;cursor:pointer;border:1.5px solid transparent;transition:all 0.18s;position:relative}
+.theme-option:active{transform:scale(0.96)}
+.theme-option.active{border-color:var(--accent)}
+.theme-option[data-t="dark"]{background:#1e1c24}
+.theme-option[data-t="light"]{background:#f7f5ff;border-color:rgba(100,80,180,0.15)}
+.theme-option[data-t="light"].active{border-color:#7c5cbf}
+.theme-option[data-t="warm"]{background:#261e17}
+.theme-option[data-t="pink"]{background:#251520}
+.theme-option[data-t="blue"]{background:#141a2e}
+.theme-option[data-t="silver"]{background:#e8e8ec;border-color:rgba(0,0,0,0.08)}
+.theme-option[data-t="silver"].active{border-color:#6e7a8a}
+.theme-option[data-t="beige"]{background:#ede6d8;border-color:rgba(120,90,50,0.12)}
+.theme-option[data-t="beige"].active{border-color:#9a7a52}
+.theme-preview{display:flex;gap:3px;margin-bottom:8px}
+.theme-preview span{height:6px;border-radius:3px;flex:1}
+.theme-option[data-t="dark"] .p1{background:#b69df8}.theme-option[data-t="dark"] .p2{background:#2a2733}.theme-option[data-t="dark"] .p3{background:#35323f}
+.theme-option[data-t="light"] .p1{background:#7c5cbf}.theme-option[data-t="light"] .p2{background:#ede9ff}.theme-option[data-t="light"] .p3{background:#cdc5e8}
+.theme-option[data-t="warm"] .p1{background:#e8a96a}.theme-option[data-t="warm"] .p2{background:#332820}.theme-option[data-t="warm"] .p3{background:#3d2e22}
+.theme-option[data-t="pink"] .p1{background:#f48fb1}.theme-option[data-t="pink"] .p2{background:#33202c}.theme-option[data-t="pink"] .p3{background:#4a2535}
+.theme-option[data-t="blue"] .p1{background:#7aabf7}.theme-option[data-t="blue"] .p2{background:#1c2540}.theme-option[data-t="blue"] .p3{background:#1e2d50}
+.theme-option[data-t="silver"] .p1{background:#6e7a8a}.theme-option[data-t="silver"] .p2{background:#e8e8ec}.theme-option[data-t="silver"] .p3{background:#b0b8c4}
+.theme-option[data-t="beige"] .p1{background:#9a7a52}.theme-option[data-t="beige"] .p2{background:#ede6d8}.theme-option[data-t="beige"] .p3{background:#c4b49a}
+.theme-name{font-size:12px;font-weight:700}
+.theme-option[data-t="dark"] .theme-name{color:#f0eef8}
+.theme-option[data-t="light"] .theme-name{color:#1e1a2e}
+.theme-option[data-t="warm"] .theme-name{color:#f5e8d8}
+.theme-option[data-t="pink"] .theme-name{color:#fce8f0}
+.theme-option[data-t="blue"] .theme-name{color:#e8eeff}
+.theme-option[data-t="silver"] .theme-name{color:#1a1a24}
+.theme-option[data-t="beige"] .theme-name{color:#2c2318}
+.theme-check{position:absolute;top:8px;right:8px;width:16px;height:16px;background:var(--accent);border-radius:50%;display:none;align-items:center;justify-content:center;font-size:9px;color:var(--btn-text)}
+.theme-option.active .theme-check{display:flex}
+
+.compress-badge{display:inline-block;background:var(--accent-dim);color:var(--accent);font-size:10px;padding:1px 7px;border-radius:10px;margin-left:6px;font-weight:700;vertical-align:middle}
+
+.empty-hint{text-align:center;padding:32px 20px;color:var(--text2);font-size:13px;font-style:italic;line-height:1.8}
+.empty-hint span{font-size:36px;display:block;margin-bottom:10px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-left">
+    <div class="app-icon">🐻</div>
+    <div>
+      <div class="app-title">Photo to PDF</div>
+      <div class="subtitle">Merge photos & PDFs in one tap</div>
+    </div>
+  </div>
+  <button class="theme-btn" onclick="openSheet()">
+    <div class="theme-dot"></div>Theme
+  </button>
+</header>
+
+<main>
+  <div class="tab-bar">
+    <button class="tab active" onclick="switchTab('photos')" id="tab-photos">📷 Photos</button>
+    <button class="tab" onclick="switchTab('pdf')" id="tab-pdf">📄 Merge PDF</button>
+    <button class="tab" onclick="switchTab('scan')" id="tab-scan">🔍 Scan</button>
+  </div>
+
+  <!-- PHOTOS TAB -->
+  <div class="tab-panel active" id="panel-photos">
+    <div class="panel-scroll">
+      <div id="photos-empty">
+        <div class="drop-zone" onclick="document.getElementById('fi-photos').click()">
+          <span class="drop-icon">🖼️</span>
+          <p class="drop-title">Select photos</p>
+          <p class="drop-hint">JPG & PNG supported<br>Large images auto-compressed</p>
+          <div class="action-row">
+            <button class="pick-btn" onclick="event.stopPropagation();document.getElementById('fi-photos').click()">＋ From Library</button>
+          </div>
+        </div>
+      </div>
+      <div id="photos-list-section" style="display:none">
+        <p class="section-label">Order <span class="count-chip" id="photosChip">0</span></p>
+        <div class="photo-list" id="photosList"></div>
+      </div>
+      <div id="photos-settings-section" style="display:none">
+        <p class="section-label">Settings</p>
+        <div class="options-card">
+          <div class="option-row">
+            <div><div class="option-label">Page Orientation</div><div class="option-hint">Orientation per page</div></div>
+            <select id="orientation"><option value="auto">Auto</option><option value="portrait">Portrait</option><option value="landscape">Landscape</option></select>
+          </div>
+          <div class="option-row">
+            <div><div class="option-label">Paper Size</div></div>
+            <select id="pageSize"><option value="a4">A4</option><option value="letter">Letter</option></select>
+          </div>
+          <div class="option-row">
+            <div><div class="option-label">Keep Margins</div><div class="option-hint">Leave space around the page</div></div>
+            <button class="toggle on" id="marginToggle" onclick="this.classList.toggle('on')"></button>
+          </div>
+          <div class="option-row">
+            <div><div class="option-label">Auto Compress <span class="compress-badge">Recommended</span></div><div class="option-hint">Shrinks large images for speed</div></div>
+            <button class="toggle on" id="compressToggle" onclick="this.classList.toggle('on')"></button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="bottom-bar">
+      <div class="progress-bar" id="progressBarPhotos"><div class="progress-fill" id="progressFillPhotos"></div></div>
+      <button class="merge-btn" id="mergeBtnPhotos" onclick="mergePhotos()" disabled><span>Select photos first</span></button>
+    </div>
+  </div>
+
+  <!-- MERGE PDF TAB -->
+  <div class="tab-panel" id="panel-pdf">
+    <div class="panel-scroll">
+      <div id="pdf-empty">
+        <div class="drop-zone" onclick="document.getElementById('fi-pdfs').click()">
+          <span class="drop-icon">📄</span>
+          <p class="drop-title">Select PDF files</p>
+          <p class="drop-hint">Select multiple PDFs to merge<br>Pages will be combined in order</p>
+          <div class="action-row">
+            <button class="pick-btn" onclick="event.stopPropagation();document.getElementById('fi-pdfs').click()">＋ Add PDFs</button>
+          </div>
+        </div>
+      </div>
+      <div id="pdf-list-section" style="display:none">
+        <p class="section-label">PDF Files <span class="count-chip" id="pdfsChip">0</span></p>
+        <div class="photo-list" id="pdfsList"></div>
+      </div>
+    </div>
+    <div class="bottom-bar">
+      <div class="progress-bar" id="progressBarPDF"><div class="progress-fill" id="progressFillPDF"></div></div>
+      <button class="merge-btn" id="mergeBtnPDF" onclick="mergePDFs()" disabled><span>Select PDFs first</span></button>
+    </div>
+  </div>
+
+  <!-- SCAN TAB -->
+  <div class="tab-panel" id="panel-scan">
+    <div class="panel-scroll">
+      <div class="scan-box">
+        <div class="scan-placeholder" id="scanPlaceholder"><span>📷</span>No scan yet</div>
+        <img class="scan-preview" id="scanPreview" style="display:none">
+        <div class="scan-actions">
+          <button class="scan-btn primary" onclick="document.getElementById('fi-scan').click()">📷 Open Camera</button>
+          <button class="scan-btn ghost" id="scanAddBtn" onclick="addScanToPDF()" style="display:none">＋ Add to PDF</button>
+        </div>
+        <p class="scan-tip">Point your camera at a document. For best results, ensure good lighting and flat surface.</p>
+      </div>
+      <div id="scan-list-section" style="display:none">
+        <p class="section-label">Scanned Pages <span class="count-chip" id="scanChip">0</span></p>
+        <div class="photo-list" id="scanList"></div>
+      </div>
+    </div>
+    <div class="bottom-bar">
+      <div class="progress-bar" id="progressBarScan"><div class="progress-fill" id="progressFillScan"></div></div>
+      <button class="merge-btn" id="mergeBtnScan" onclick="mergeScan()" disabled><span>Scan a page first</span></button>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast"></div>
+<div class="sheet-overlay" id="overlay" onclick="closeSheet()"></div>
+<div class="theme-sheet" id="themeSheet">
+  <div class="sheet-handle"></div>
+  <div class="sheet-title">Choose Theme</div>
+  <div class="theme-options">
+    <div class="theme-option" data-t="dark" onclick="setTheme('dark')"><div class="theme-preview"><span class="p1"></span><span class="p2"></span><span class="p3"></span></div><div class="theme-name">Midnight</div><div class="theme-check">✓</div></div>
+    <div class="theme-option" data-t="light" onclick="setTheme('light')"><div class="theme-preview"><span class="p1"></span><span class="p2"></span><span class="p3"></span></div><div class="theme-name">Lavender</div><div class="theme-check">✓</div></div>
+    <div class="theme-option" data-t="warm" onclick="setTheme('warm')"><div class="theme-preview"><span class="p1"></span><span class="p2"></span><span class="p3"></span></div><div class="theme-name">Caramel</div><div class="theme-check">✓</div></div>
+    <div class="theme-option" data-t="pink" onclick="setTheme('pink')"><div class="theme-preview"><span class="p1"></span><span class="p2"></span><span class="p3"></span></div><div class="theme-name">Rose</div><div class="theme-check">✓</div></div>
+    <div class="theme-option" data-t="blue" onclick="setTheme('blue')"><div class="theme-preview"><span class="p1"></span><span class="p2"></span><span class="p3"></span></div><div class="theme-name">Ocean</div><div class="theme-check">✓</div></div>
+    <div class="theme-option" data-t="silver" onclick="setTheme('silver')"><div class="theme-preview"><span class="p1"></span><span class="p2"></span><span class="p3"></span></div><div class="theme-name">Silver</div><div class="theme-check">✓</div></div>
+    <div class="theme-option" data-t="beige" onclick="setTheme('beige')"><div class="theme-preview"><span class="p1"></span><span class="p2"></span><span class="p3"></span></div><div class="theme-name">Beige</div><div class="theme-check">✓</div></div>
+  </div>
+</div>
+
+<input type="file" id="fi-photos" accept="image/*" multiple onchange="handlePhotos(this.files)">
+<input type="file" id="fi-pdfs" accept="application/pdf" multiple onchange="handlePDFs(this.files)">
+<input type="file" id="fi-scan" accept="image/*" capture="environment" onchange="handleScan(this.files)">
+
+<script>
+const{jsPDF}=window.jspdf;
+let photos=[], pdfs=[], scans=[];
+
+setTheme(localStorage.getItem('pdf-theme')||'dark',false);
+
+function setTheme(t,save=true){
+  document.documentElement.setAttribute('data-theme',t);
+  document.querySelectorAll('.theme-option').forEach(el=>el.classList.toggle('active',el.dataset.t===t));
+  if(save){localStorage.setItem('pdf-theme',t);closeSheet();}
+}
+function openSheet(){document.getElementById('overlay').classList.add('open');document.getElementById('themeSheet').classList.add('open')}
+function closeSheet(){document.getElementById('overlay').classList.remove('open');document.getElementById('themeSheet').classList.remove('open')}
+
+function switchTab(name){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  document.getElementById('panel-'+name).classList.add('active');
+}
+
+function formatSize(b){return b>1048576?(b/1048576).toFixed(1)+' MB':Math.round(b/1024)+' KB'}
+function dateStamp(){const d=new Date();return d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0')}
+
+/* ---- PHOTOS ---- */
+function handlePhotos(files){
+  Array.from(files).filter(f=>f.type.startsWith('image/')).forEach(f=>photos.push({file:f,url:URL.createObjectURL(f),name:f.name,size:f.size}));
+  renderPhotos();
+}
+function renderPhotos(){
+  const hasItems=photos.length>0;
+  document.getElementById('photos-empty').style.display=hasItems?'none':'block';
+  document.getElementById('photos-list-section').style.display=hasItems?'block':'none';
+  document.getElementById('photos-settings-section').style.display=hasItems?'block':'none';
+  document.getElementById('photosChip').textContent=photos.length;
+  const btn=document.getElementById('mergeBtnPhotos');
+  btn.disabled=!hasItems;
+  btn.querySelector('span').textContent=hasItems?`Merge ${photos.length} photo${photos.length>1?'s':''} into PDF`:'Select photos first';
+  const list=document.getElementById('photosList');
+  list.innerHTML='';
+  photos.forEach((p,i)=>{
+    const c=document.createElement('div');c.className='photo-card';
+    c.innerHTML=`<img class="photo-thumb" src="${p.url}" loading="lazy"><div class="photo-info"><div class="photo-name">${p.name}</div><div class="photo-meta">${formatSize(p.size)}</div><div class="photo-page">Page ${i+1}</div></div><div class="photo-actions"><button class="icon-btn" onclick="movePhoto(${i},-1)" ${i===0?'disabled':''}>↑</button><button class="icon-btn" onclick="movePhoto(${i},1)" ${i===photos.length-1?'disabled':''}>↓</button><button class="del-btn" onclick="removePhoto(${i})">✕</button></div>`;
+    list.appendChild(c);
+  });
+  const add=document.createElement('div');add.className='add-more-row';add.onclick=()=>document.getElementById('fi-photos').click();add.innerHTML='＋ Add more photos';
+  list.appendChild(add);
+}
+function movePhoto(i,d){const j=i+d;if(j<0||j>=photos.length)return;[photos[i],photos[j]]=[photos[j],photos[i]];renderPhotos()}
+function removePhoto(i){URL.revokeObjectURL(photos[i].url);photos.splice(i,1);renderPhotos()}
+
+async function compressImage(file,maxPx=2400,q=0.85){
+  return new Promise(res=>{
+    const img=new Image(),url=URL.createObjectURL(file);
+    img.onload=()=>{
+      URL.revokeObjectURL(url);
+      let{naturalWidth:w,naturalHeight:h}=img;
+      if(w<=maxPx&&h<=maxPx){res(file);return;}
+      const r=Math.min(maxPx/w,maxPx/h);
+      const cv=document.createElement('canvas');cv.width=Math.round(w*r);cv.height=Math.round(h*r);
+      cv.getContext('2d').drawImage(img,0,0,cv.width,cv.height);
+      cv.toBlob(b=>res(b||file),'image/jpeg',q);
+    };img.src=url;
+  });
+}
+
+async function mergePhotos(){
+  if(!photos.length)return;
+  const ori=document.getElementById('orientation').value;
+  const ps=document.getElementById('pageSize').value;
+  const mg=document.getElementById('marginToggle').classList.contains('on')?10:0;
+  const doC=document.getElementById('compressToggle').classList.contains('on');
+  const pb=document.getElementById('progressBarPhotos');
+  const pf=document.getElementById('progressFillPhotos');
+  const btn=document.getElementById('mergeBtnPhotos');
+  pb.style.display='block';btn.disabled=true;
+  try{
+    const pd=ps==='a4'?{w:210,h:297}:{w:215.9,h:279.4};
+    let pdf=null;
+    for(let i=0;i<photos.length;i++){
+      pf.style.width=`${(i/photos.length)*90}%`;
+      btn.querySelector('span').textContent=`Processing ${i+1}/${photos.length}...`;
+      let src=photos[i].file;
+      if(doC)src=await compressImage(src);
+      const id=await loadImg(src);
+      const dim=await getDim(id);
+      const o=ori==='auto'?(dim.w>=dim.h?'landscape':'portrait'):ori;
+      const pw=o==='landscape'?pd.h:pd.w,ph=o==='landscape'?pd.w:pd.h;
+      if(!pdf)pdf=new jsPDF({orientation:o,unit:'mm',format:[pw,ph]});
+      else pdf.addPage([pw,ph],o);
+      const aw=pw-mg*2,ah=ph-mg*2,r=Math.min(aw/dim.w,ah/dim.h),dw=dim.w*r,dh=dim.h*r;
+      pdf.addImage(id,'JPEG',mg+(aw-dw)/2,mg+(ah-dh)/2,dw,dh);
+    }
+    pf.style.width='100%';
+    pdf.save(`photos_${dateStamp()}.pdf`);
+    showToast('✅ PDF saved!');
+  }catch(e){
+    console.error(e);
+    showToast('❌ Error, please try again');
+  }
+  setTimeout(()=>{pb.style.display='none';pf.style.width='0%';btn.disabled=false;renderPhotos();},1200);
+}
+
+/* ---- PDFs ---- */
+function handlePDFs(files){
+  Array.from(files).filter(f=>f.type==='application/pdf').forEach(f=>pdfs.push({file:f,name:f.name,size:f.size}));
+  renderPDFs();
+}
+function renderPDFs(){
+  const hasItems=pdfs.length>0;
+  document.getElementById('pdf-empty').style.display=hasItems?'none':'block';
+  document.getElementById('pdf-list-section').style.display=hasItems?'block':'none';
+  document.getElementById('pdfsChip').textContent=pdfs.length;
+  const btn=document.getElementById('mergeBtnPDF');
+  btn.disabled=pdfs.length<1;
+  btn.querySelector('span').textContent=pdfs.length>1?`Merge ${pdfs.length} PDFs`:(pdfs.length===1?'Add at least one more PDF':'Select PDFs first');
+  const list=document.getElementById('pdfsList');
+  list.innerHTML='';
+  pdfs.forEach((p,i)=>{
+    const c=document.createElement('div');c.className='photo-card';
+    c.innerHTML=`<div class="pdf-thumb">📄</div><div class="photo-info"><div class="photo-name">${p.name}</div><div class="photo-meta">${formatSize(p.size)}</div><div class="photo-page">File ${i+1}</div></div><div class="photo-actions"><button class="icon-btn" onclick="movePDF(${i},-1)" ${i===0?'disabled':''}>↑</button><button class="icon-btn" onclick="movePDF(${i},1)" ${i===pdfs.length-1?'disabled':''}>↓</button><button class="del-btn" onclick="removePDF(${i})">✕</button></div>`;
+    list.appendChild(c);
+  });
+  const add=document.createElement('div');add.className='add-more-row';add.onclick=()=>document.getElementById('fi-pdfs').click();add.innerHTML='＋ Add more PDFs';
+  list.appendChild(add);
+}
+function movePDF(i,d){const j=i+d;if(j<0||j>=pdfs.length)return;[pdfs[i],pdfs[j]]=[pdfs[j],pdfs[i]];renderPDFs()}
+function removePDF(i){pdfs.splice(i,1);renderPDFs()}
+
+async function mergePDFs(){
+  if(pdfs.length<1)return;
+  const pb=document.getElementById('progressBarPDF');
+  const pf=document.getElementById('progressFillPDF');
+  const btn=document.getElementById('mergeBtnPDF');
+  pb.style.display='block';btn.disabled=true;btn.querySelector('span').textContent='Merging...';
+  try{
+    const{PDFDocument}=PDFLib;
+    const merged=await PDFDocument.create();
+    for(let i=0;i<pdfs.length;i++){
+      pf.style.width=`${(i/pdfs.length)*90}%`;
+      btn.querySelector('span').textContent=`Processing ${i+1}/${pdfs.length}...`;
+      const bytes=await pdfs[i].file.arrayBuffer();
+      const doc=await PDFDocument.load(bytes);
+      const pages=await merged.copyPages(doc,doc.getPageIndices());
+      pages.forEach(p=>merged.addPage(p));
+    }
+    pf.style.width='100%';
+    const bytes=await merged.save();
+    const blob=new Blob([bytes],{type:'application/pdf'});
+    const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`merged_${dateStamp()}.pdf`;a.click();
+    showToast('✅ PDF merged & saved!');
+  }catch(e){
+    console.error(e);
+    showToast('❌ Error merging PDFs');
+  }
+  setTimeout(()=>{pb.style.display='none';pf.style.width='0%';btn.disabled=false;renderPDFs();},1200);
+}
+
+/* ---- SCAN ---- */
+function handleScan(files){
+  const f=files[0];
+  if(!f||!f.type.startsWith('image/'))return;
+  const url=URL.createObjectURL(f);
+  document.getElementById('scanPlaceholder').style.display='none';
+  const prev=document.getElementById('scanPreview');
+  prev.src=url;prev.style.display='block';
+  document.getElementById('scanAddBtn').style.display='flex';
+  document._scanFile={file:f,url,name:f.name,size:f.size};
+  document.getElementById('fi-scan').value='';
+}
+function addScanToPDF(){
+  if(!document._scanFile)return;
+  scans.push({...document._scanFile,url:URL.createObjectURL(document._scanFile.file)});
+  document._scanFile=null;
+  document.getElementById('scanPreview').style.display='none';
+  document.getElementById('scanPlaceholder').style.display='flex';
+  document.getElementById('scanAddBtn').style.display='none';
+  renderScans();
+  showToast(`Page ${scans.length} added`);
+}
+function renderScans(){
+  const hasItems=scans.length>0;
+  document.getElementById('scan-list-section').style.display=hasItems?'block':'none';
+  document.getElementById('scanChip').textContent=scans.length;
+  const btn=document.getElementById('mergeBtnScan');
+  btn.disabled=!hasItems;
+  btn.querySelector('span').textContent=hasItems?`Save ${scans.length} scanned page${scans.length>1?'s':''} as PDF`:'Scan a page first';
+  const list=document.getElementById('scanList');
+  list.innerHTML='';
+  scans.forEach((p,i)=>{
+    const c=document.createElement('div');c.className='photo-card';
+    c.innerHTML=`<img class="photo-thumb" src="${p.url}" loading="lazy"><div class="photo-info"><div class="photo-name">Scan ${i+1}</div><div class="photo-meta">${formatSize(p.size)}</div><div class="photo-page">Page ${i+1}</div></div><div class="photo-actions"><button class="icon-btn" onclick="moveScan(${i},-1)" ${i===0?'disabled':''}>↑</button><button class="icon-btn" onclick="moveScan(${i},1)" ${i===scans.length-1?'disabled':''}>↓</button><button class="del-btn" onclick="removeScan(${i})">✕</button></div>`;
+    list.appendChild(c);
+  });
+}
+function moveScan(i,d){const j=i+d;if(j<0||j>=scans.length)return;[scans[i],scans[j]]=[scans[j],scans[i]];renderScans()}
+function removeScan(i){URL.revokeObjectURL(scans[i].url);scans.splice(i,1);renderScans()}
+async function mergeScan(){
+  if(!scans.length)return;
+  const pb=document.getElementById('progressBarScan');
+  const pf=document.getElementById('progressFillScan');
+  const btn=document.getElementById('mergeBtnScan');
+  pb.style.display='block';btn.disabled=true;btn.querySelector('span').textContent='Processing...';
+  try{
+    let pdf=null;
+    const pd={w:210,h:297};
+    for(let i=0;i<scans.length;i++){
+      pf.style.width=`${(i/scans.length)*90}%`;
+      const id=await loadImg(scans[i].file);
+      const dim=await getDim(id);
+      const o=dim.w>=dim.h?'landscape':'portrait';
+      const pw=o==='landscape'?pd.h:pd.w,ph=o==='landscape'?pd.w:pd.h;
+      if(!pdf)pdf=new jsPDF({orientation:o,unit:'mm',format:[pw,ph]});
+      else pdf.addPage([pw,ph],o);
+      const r=Math.min(pw/dim.w,ph/dim.h),dw=dim.w*r,dh=dim.h*r;
+      pdf.addImage(id,'JPEG',(pw-dw)/2,(ph-dh)/2,dw,dh);
+    }
+    pf.style.width='100%';
+    pdf.save(`scan_${dateStamp()}.pdf`);
+    showToast('✅ Scan saved as PDF!');
+  }catch(e){showToast('❌ Error, please try again')}
+  setTimeout(()=>{pb.style.display='none';pf.style.width='0%';btn.disabled=false;renderScans();},1200);
+}
+
+/* ---- utils ---- */
+function loadImg(f){return new Promise((res,rej)=>{const r=new FileReader();r.onload=e=>res(e.target.result);r.onerror=rej;r.readAsDataURL(f)})}
+function getDim(d){return new Promise(res=>{const i=new Image();i.onload=()=>res({w:i.naturalWidth,h:i.naturalHeight});i.src=d})}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3000)}
+
+// Load PDF-lib for PDF merging
+const s=document.createElement('script');
+s.src='https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js';
+document.head.appendChild(s);
+</script>
+</body>
+</html>
